@@ -8,18 +8,13 @@ app.use(express.json());
 
 app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
-
   const body = req.body;
-
   if (!body?.data?.message?.conversation) return;
   if (body?.data?.key?.fromMe) return;
-
   const from = body.data.key.remoteJid;
   const text = body.data.message.conversation;
   const name = body.data.pushName || 'Cliente';
-
   console.log(`[${new Date().toISOString()}] Mensagem de ${name} (${from}): ${text}`);
-
   try {
     await sendTyping(from);
     const session = getSession(from);
@@ -29,6 +24,35 @@ app.post('/webhook', async (req, res) => {
   } catch (err) {
     console.error('Erro ao processar mensagem:', err);
     await sendMessage(from, 'Tive um problema técnico. Tente novamente em instantes.');
+  }
+});
+
+app.get('/qrcode', async (req, res) => {
+  try {
+    const EVOLUTION_URL = process.env.EVOLUTION_URL;
+    const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
+    const EVOLUTION_INSTANCE = process.env.EVOLUTION_INSTANCE;
+
+    const response = await fetch(`${EVOLUTION_URL}/instance/connect/${EVOLUTION_INSTANCE}`, {
+      headers: { 'apikey': EVOLUTION_API_KEY }
+    });
+    const data = await response.json();
+
+    if (data.base64) {
+      res.send(`
+        <html>
+          <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#111;color:white">
+            <h2>Escaneie o QR Code com o WhatsApp</h2>
+            <img src="${data.base64}" style="width:300px;height:300px;border:8px solid white;border-radius:12px"/>
+            <p>O QR Code expira em 60 segundos. <a href="/qrcode" style="color:#25D366">Clique aqui para atualizar</a></p>
+          </body>
+        </html>
+      `);
+    } else {
+      res.send(`<pre>${JSON.stringify(data, null, 2)}</pre>`);
+    }
+  } catch (err) {
+    res.send(`Erro: ${err.message}`);
   }
 });
 
