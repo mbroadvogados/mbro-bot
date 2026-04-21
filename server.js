@@ -33,7 +33,7 @@ app.get('/qrcode', async (req, res) => {
     const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
     const EVOLUTION_INSTANCE = process.env.EVOLUTION_INSTANCE || 'mbro-bot';
 
-    const url = `${EVOLUTION_URL}/instance/connect/${EVOLUTION_INSTANCE}`;
+    const url = `${EVOLUTION_URL}/instance/fetchInstances`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {
